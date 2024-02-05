@@ -1,0 +1,92 @@
+---
+- name: Install and configure ArgoCD
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: false
+  tasks:
+    # Deploy ArgoCD
+    - name: configure argocd namespace
+      kubernetes.core.k8s:
+        src: "argocd/namespace.yml"
+      failed_when: false
+
+    - name: configure argocd operatorgroup
+      kubernetes.core.k8s:
+        src: "argocd/operatorgroup.yml"
+
+    - name: configure argocd subscription
+      kubernetes.core.k8s:
+        src: "argocd/subscription.yml"
+      register: deploy_argocd
+      until: "deploy_argocd.result.status.state == 'AtLatestKnown'"
+      retries: 10
+      delay: 10
+
+    - name: configure argocd cluster role binding
+      kubernetes.core.k8s:
+        src: "argocd/clusterrolebinding.yml"
+
+    - name: configure argocd
+      kubernetes.core.k8s:
+        template: "argocd/instance.yml"
+
+    - name: configure argocd repo
+      kubernetes.core.k8s:
+        template: "argocd/repo.yml"
+
+    - name: configure argocd initial application
+      kubernetes.core.k8s:
+        template: "argocd/application.yml"
+
+    # This namespace is later managed by GitOps, but is required for the initial bootstrapping to complete
+    - name: configure build project
+      kubernetes.core.k8s:
+        resource_definition:
+          kind: Project
+          apiVersion: project.openshift.io/v1
+          metadata:
+            name: build
+            labels:
+              kubernetes.io/metadata.name: build
+      failed_when: false
+
+    - name: configure SSH secret
+      kubernetes.core.k8s:
+        resource_definition:
+          kind: Secret
+          apiVersion: v1
+          metadata:
+            name: gitops-github-ssh-creds
+            namespace: build
+            annotations:
+              tekton.dev/git-0: github.com
+          type: kubernetes.io/ssh-auth
+          data:
+            ssh-privatekey: "{{ ssh_private_key | b64encode}}"
+      no_log: true
+
+    - name: configure Quay Pull secret
+      kubernetes.core.k8s:
+        resource_definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: quay-robot-pull-secret
+            namespace: build
+          data:
+            .dockerconfigjson: "{{ quay_pull_secret }}"
+          type: kubernetes.io/dockerconfigjson
+      no_log: true
+
+    - name: link secrets to pipelines service account
+      kubernetes.core.k8s:
+        resource_definition:
+          kind: ServiceAccount
+          apiVersion: v1
+          metadata:
+            name: pipeline
+            namespace: build
+          secrets:
+            - name: gitops-github-ssh-creds
+            - name: quay-robot-pull-secret

@@ -1,0 +1,33 @@
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: cluster-gitops
+  namespace: openshift-gitops
+  labels:
+    argocd.argoproj.io/secret-type: repository
+  annotations:
+    managed-by: argocd.argoproj.io
+data:
+  name: Y2x1c3Rlci1naXRvcHMK
+  project: ZGVmYXVsdA==
+  sshPrivateKey: "{{ ssh_private_key | b64encode }}"
+  type: Z2l0
+  url: Z2l0QGdpdGh1Yi5jb206YWh1c3NleS1yZWRoYXQvcHJvamVjdDE5ODktZGVtby5naXQK
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: project1989-gitops
+  namespace: openshift-gitops
+  labels:
+    argocd.argoproj.io/secret-type: repository
+  annotations:
+    managed-by: argocd.argoproj.io
+data:
+  name: cHJvamVjdDE5ODktZ2l0b3BzCg==
+  project: ZGVmYXVsdA==
+  sshPrivateKey: "{{ ssh_private_key | b64encode }}"
+  type: Z2l0
+  url: Z2l0QGdpdGh1Yi5jb206YWh1c3NleS1yZWRoYXQvcHJvamVjdDE5ODktZ2l0b3BzLmdpdAo=
+type: Opaque

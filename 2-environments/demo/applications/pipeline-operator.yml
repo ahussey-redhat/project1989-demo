@@ -1,0 +1,25 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pipeline-operator
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  destination:
+    namespace: openshift-pipelines
+    server: 'https://kubernetes.default.svc'
+  project: default
+  source:
+    path: 3-operators/pipelines/overlays/latest
+    repoURL: >-
+      git@github.com:ahussey-redhat/project1989-demo.git
+    targetRevision: main
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

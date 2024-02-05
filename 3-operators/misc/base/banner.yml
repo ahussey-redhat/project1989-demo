@@ -1,0 +1,10 @@
+---
+apiVersion: console.openshift.io/v1
+kind: ConsoleNotification
+metadata:
+  name: classification-banner-top
+spec:
+  backgroundColor: '#FEDDB9'
+  color: '#FFFFFF'
+  location: BannerTop
+  text: "<change-me>"
